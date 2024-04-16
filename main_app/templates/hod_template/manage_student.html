@@ -1,0 +1,75 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+
+{% block page_title %}{{page_title}}{% endblock page_title %}
+
+{% block add_button %}
+<div style="display: flex; justify-content: flex-end;">
+    {% url 'add_student' as add_student %}
+    <a href="{{add_student}}" type="button" class="btn btn-success">+ Add Student</a> 
+</div>
+{% endblock add_button %}
+
+{% block content %}
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">{{page_title}}</h3>
+                    </div>
+                    <!-- /.card-header -->
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {% if search_query %}
+                                    <input value="{{search_query}}" type="text" id="searchInput" class="form-control" placeholder="Search...">
+                                {% else %}
+                                    <input type="text" id="searchInput" class="form-control" placeholder="Search...">
+                                {% endif %}
+                            </div>
+                        </div>
+                        <table id="table" class="table table-bordered table-hover">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>#</th>
+                                    <th class="sortable" onclick="sortTable(1)">Full Name</th>
+                                    <th class="sortable" onclick="sortTable(2)">Email</th>
+                                    <th class="sortable" onclick="sortTable(3)">Gender</th>
+                                    <th class="sortable" onclick="sortTable(4)">Class</th>
+                                    <th>Avatar</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                                <tbody>
+                                    {% for student in students %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>{{student.last_name}}, {{student.first_name}}</td>
+                                        <td>{{student.email}}</td>
+                                        <td>{{student.gender}}</td>
+                                        <td>{{student.student.class_obj}}</td>
+                                        <td>
+                                            {% if student.profile_pic == ""  %}
+                                            No Image
+                                            {% else %}
+                                            <img class="img img-fluid mb-2" height="56" width="56"
+                                                src="{{student.profile_pic}}" alt="">
+                                            {% endif %}
+                                        </td>
+                                        <td><a href="{% url 'edit_student' student.student.id %}" class="btn btn-info">Edit</a> -
+                                            <a href="{% url 'delete_student' student.student.id %}" class="btn btn-danger" onclick="return confirm('Are you sure about this ?')">Delete</a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock content %}

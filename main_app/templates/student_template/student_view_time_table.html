@@ -1,0 +1,52 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+
+{% block page_title %}
+    {{ page_title }}
+{% endblock page_title %}
+
+{% block content %}
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <!-- General form elements -->
+                    <div class="card card-dark">
+                        <div class="card-header">
+                            <h3 class="card-title">{{ page_title }}</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group" style="display: none;" id="time_table_block">
+                                <div class="form-group">
+                                    <label>Time Table for {{ class_name }}:</label>
+                                    <table name="time_table" id='time_table' class="table table-bordered">
+                                    
+                                    </table>
+                                    <div id='time_table_download'>
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock content %}
+
+{% block custom_js %}
+<script>
+    var time_table = '{{ time_table | safe | escapejs }}'
+    if (time_table){
+        var html = generateTable(time_table);
+        var button_html = `<a href="/time_table/download/{{time_table_file}}" type="button" class="btn btn-primary ">Download Time Table</a>`;
+        $("#time_table_download").html(button_html);
+    }
+    else{
+        var html = "<tr><td colspan='7'>No Time Table Available For Your Class Yet.</td></tr>";
+    }
+    $("#time_table").html(html);
+    $("#time_table_block").show();
+</script>
+{% endblock custom_js %}

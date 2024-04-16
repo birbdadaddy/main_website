@@ -1,0 +1,57 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+
+{% block page_title %}
+    {{ page_title }}
+{% endblock page_title %}
+
+{% block content %}
+    <section class="content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-md-12">
+                    <!-- General form elements -->
+                    <div class="card card-dark">
+                        <div class="card-header">
+                            <h3 class="card-title">{{ page_title }}</h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group" id="time_tables_block">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock content %}
+
+{% block custom_js %}
+<script>
+        var time_tables = {{ time_tables | safe }};
+        var full_html = '';
+        
+        time_tables.forEach(function(time_table) {
+            if (Object.keys(time_table.time_table).length > 0) {
+                var html = generateTable(time_table.time_table);
+                var table_body = `<div class="form-group">
+                    <label>Time Table for ${time_table.name}:</label>
+                    <table name="time_table" id='${time_tables.indexOf(time_table)}' class="table table-bordered">
+                        ${ html }
+                    </table>
+                    <a href="/time_table/download/${time_table.time_table_file}" type="button" class="btn btn-primary ">Download Time Table</a>
+                </div>`;
+            } else {
+                var table_body = `<div class="form-group">
+                    <label>Time Table for ${time_table.name}:</label>
+                    <table name="time_table" class="table table-bordered">
+                        <tr><td colspan='7'>No Time Table Available For This Class Yet.</td></tr>
+                    </table>
+                </div>`;
+            }
+            full_html += table_body;
+        });
+        $("#time_tables_block").html(full_html);
+        $("#time_tables_block").show();
+</script>
+{% endblock custom_js %}

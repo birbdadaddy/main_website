@@ -1,0 +1,106 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+{% block page_title %}{{page_title}}{% endblock page_title %}
+
+{% block add_button %}
+<div style="display: flex; justify-content: flex-end;">
+    {% url 'add_time_table' as add_time_table %}
+    <a href="{{add_time_table}}" type="button" class="btn btn-success">+ Add Time Table</a> 
+</div>
+{% endblock add_button %}
+
+{% block content %}
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <!-- general form elements -->
+                <div class="card card-dark">
+                    <div class="card-header">
+                        <h3 class="card-title">{{page_title}}</h3>
+                    </div>
+                    <!-- /.card-header -->
+                    <!-- form start -->
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>Class</label>
+                            <select name="class" class="form-control" id='class'>
+                                <option value="">----</option> {% for class_obj in classes  %} <option value="{{class_obj.id}}">{{class_obj}}</option> {% endfor %}
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <div style="display: none;" class="alert alert-danger" id='error_time_table'></div>
+                            <button type="button" id='fetch_time_table' class="btn btn-success btn-block">Fetch Time Table</button>
+                        </div>
+                        <!-- /.card-body -->
+                        <div class="form-group" style="display: none;" id="time_table_block">
+                            <div class="form-group">
+                                <label>Time Table:</label>
+                                <table name="time_table" id='time_table' class="table table-bordered">
+                                
+                                </table>
+                                <div id="action_buttons">
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /.card -->
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock content %}
+
+{% block custom_js %}
+<script>
+    $(document).ready(function() {
+        $("#fetch_time_table").click(function() {
+            var class_name = $("#class").val();
+            $("#time_table").html("");
+    
+            if (class_name.length < 1) {
+                $("#error_time_table").html("Please Select A Class");
+                $("#time_table_block").hide();
+                $("#error_time_table").show();
+                return false;
+            }
+            $.ajax({
+                url: "{% url 'get_time_table' %}",
+                type: 'POST',
+                data: {
+                    class_obj: class_name
+                }
+            }).done(function(response) {
+                var json_data = JSON.parse(response[0]);
+                var time_table_path = response[1];
+                console.log(json_data);
+                if (Object.keys(json_data).length > 1) {
+                    
+                    var html = generateTable(json_data);
+                    
+                    $("#time_table").html(html);
+                    $("#action_buttons").html(`<a href="/time_table/download/${time_table_path}" type="button" class="btn btn-primary ">Download Time Table</a> <a href="/time_table/delete/${class_name}" type="button" class="btn btn-danger ">Delete Time Table</a> `);
+                    $("#download_button").html(``);
+                    $("#error_time_table").hide();
+                    $("#error_time_table").html("");
+                    $("#time_table_block").show();
+                } else {
+                    $("#error_time_table").html("No Time Table Found For This Class");
+                    $("#error_time_table").show();
+                    $("#time_table").html("");
+                    $("#time_table_block").hide();
+                }
+            }).fail(function(response) {
+                $("#error_time_table").html("No Time Table Found For This Class");
+                $("#error_time_table").show();
+                $("#time_table").html("");
+                $("#time_table_block").hide();
+            });
+        });
+    });
+
+</script>
+
+{% endblock custom_js %}

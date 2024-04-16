@@ -1,0 +1,167 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+{% block page_title %}{{ page_title }}{% endblock page_title %}
+{% block custom_css %}
+<style>
+    .invalid {
+        font-style: italic;
+        font-weight: bold;
+        color: red;
+    }
+
+    .valid {
+        font-style: italic;
+        font-weight: bold;
+        color: green;
+    }
+
+    .grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        grid-gap: 10px;
+    }
+
+    .grid-item label {
+        display: flex;
+        align-items: center;
+        width: 120px;
+        font-weight: bold;
+    }
+
+    .grid-item input[type="checkbox"] {
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        border: 1px solid #000;
+        border-radius: 5px;
+        width: 20px;
+        height: 20px;
+        position: relative;
+        margin-right: 5px;
+    }
+    .grid-item input[type="checkbox"]:checked {
+        background-color: #0069d9;
+    }
+
+    .grid-item input[type="checkbox"]::after {
+        content: "";
+        display: block;
+        width: 5px;
+        height: 10px;
+        border: solid white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+        position: absolute;
+        top: 16%;
+        left: 37%;
+        transform-origin: center;
+        opacity: 0;
+    }
+
+    .grid-item input[type="checkbox"]:checked::after {
+        opacity: 1;
+    }
+</style>
+{% endblock custom_css %}
+{% block content %}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <!-- general form elements -->
+                <div class="card card-dark">
+                    <div class="card-header">
+                        <h3 class="card-title">{{ page_title }}</h3>
+                    </div>
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="id_first_name">First name:</label>
+                                <input type="text" class="form-control" id="id_first_name" name="first_name" value="{{ form.first_name.value }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="id_last_name">Last name:</label>
+                                <input type="text" class="form-control" id="id_last_name" name="last_name" value="{{ form.last_name.value }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="id_email">Email address:</label>
+                                <input type="email" class="form-control" id="id_email" name="email" value="{{ form.email.value }}" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="id_gender">Gender:</label>
+                                <select name="gender" class="form-control" id="id_gender">
+                                    <option value="M" {% if form.gender.value == 'M' %} selected {% endif %}>Male</option>
+                                    <option value="F" {% if form.gender.value == 'F' %} selected {% endif %}>Female</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="id_password">Password:</label>
+                                <input type="password" class="form-control" id="id_password" name="password" placeholder="Fill this only if you wish to update the password">
+                            </div>
+                            <div class="form-group">
+                                <label for="id_profile_pic">Profile picture:</label>
+                                <input type="file" name="profile_pic" accept="image/*" class="form-control" id="id_profile_pic">
+                            </div>
+                            <div class="form-group">
+                                <label for="id_address">Address:</label>
+                                <textarea name="address" cols="40" rows="10" class="form-control" required="" id="id_address">{{ form.address.value }}</textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="id_class_obj">Classes:</label>
+                                <div class="grid-container">
+                                    {% for class_ob in form.class_obj %}
+                                    <div class="grid-item">
+                                        {{ class_ob }} <!-- Display the label directly -->
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        <!-- /.card-body -->
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-success btn-block">
+                                Update Staff
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <!-- /.card -->
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock content %}
+{% block custom_js %}
+<script>
+    function validateEmail(email) {
+        const re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+        return re.test(String(email).toLowerCase());
+    }
+
+    $(document).ready(function () {
+        $("#id_email").keyup(function () {
+            var email = $(this).val()
+            if (validateEmail(email)) {
+                $.ajax({
+                    url: "{% url 'check_email_availability' %}",
+                    type: 'POST',
+                    data: { email: email }
+                }).done(function (response) {
+                    if (response == "True") {
+                        $(".email_error").remove()
+                        $("<span class='invalid email_error'>Email Address Already Exist</span>").insertAfter("#id_email");
+                    } else {
+                        $(".email_error").remove()
+                        $("<span class='valid email_error'>Email Address Available</span>").insertAfter("#id_email");
+                    }
+                }).fail(function (response) {
+                    $("<span class='alert alert-warning'>Server Could Not Process This</span>").insertAfter("#id_email");
+                })
+            }
+        })
+    });
+</script>
+{% endblock custom_js %}

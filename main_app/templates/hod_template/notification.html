@@ -1,0 +1,247 @@
+{% extends 'main_app/base.html' %}
+{% load static %}
+{% block page_title %}{{page_title}}{% endblock page_title %}
+
+{% block content %}
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="form-group">
+                    <div class="alert alert-success" id="success_message">
+                    </div>
+                    <div class="alert alert-danger" id="error_message">
+                    </div>
+            
+                </div>
+                <!-- general form elements -->
+                <div class="card card-dark">
+                    <div class="card-header">
+                        <h3 class="card-title">{{page_title}}</h3>
+                    </div>
+                        <form method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label for="user_type">User type:</label>
+                                    <select name="user_type" class="form-control" id="user_type">
+                                        <option value=*>All</option>
+                                        <option value=2>Staff</option>
+                                        <option value=3>Student</option>
+                                      </select>
+                                </div>
+                                <div class="form-group" id="year_options">
+                                    <label for="year">Year:</label>
+                                    <select name="year" class="form-control" id="year">
+                                        <option value=*>All</option>
+                                        <option value=1>Year 1</option>
+                                        <option value=2>Year 2</option>
+                                        <option value=3>Year 3</option>
+                                      </select>
+                                </div>
+                                <div class="form-group" id="class_type_options">
+                                    <label for="class_type">Class type:</label>
+                                    <select name="class_type" class="form-control" id="class_type">
+                                        <option value=*>All</option>
+                                        <option value="AGSE">AGSE</option>
+                                        <option value="APIC">APIC</option>
+                                      </select>
+                                </div>
+                                <div class="form-group" id="class_options">
+                                    <label for="class_obj">Class:</label>
+                                    <select name="class_obj" class="form-control" id="class_obj">
+                                        <option value=*>All</option>
+                                        <!-- TODO : Populate class options based on selected year and class type -->
+                                      </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="message">Message:</label>
+                                    <textarea name="message" cols="40" rows="10" class="form-control" required="" id="message"></textarea>
+                                </div>
+                            </div>
+                                    
+                            <!-- /.card-body -->
+                        
+                            <div class="card-footer">
+                                <button type="submit" id="send" class="btn btn-success btn-block">
+                                    Send Notification
+                                </button>
+                            </div>
+                        </form>
+                </div>
+                <!-- /.card -->
+                <div class="card card-dark">
+                    <div class="card-header">
+                        <h3 class="card-title">Notification History </h3>
+                    </div>
+                    
+                    <div class="table card-body">
+                        <table class="table table-bordered table-hover">
+                            <tr>
+                                <th>#</th>
+                                <th>Message</th>
+                                <th>Date</th>
+                            </tr>
+                            {% for notification in notifications %}
+                              <tr>
+                                  <td>{{forloop.counter}}</td>
+                                  <td>{{notification}}</td>
+                                  <td>{{notification.created_at}}</td>
+                              </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% comment %} <div class = "modal fade" id = "myModal" tabindex = "-1" role = "dialog" 
+   aria-labelledby = "myModalLabel" aria-hidden = "true">
+   
+   <div class = "modal-dialog">
+      <div class = "modal-content">
+         
+         <div class = "modal-header">Send Notification
+            <button type = "button" class = "close" data-dismiss = "modal" aria-hidden = "true">
+                  &times;
+            </button>
+            
+           
+         </div>
+         
+         <div class = "modal-body">
+            <div class="form-group">
+                <input type="text" id="message" class='form-control'>
+                <input type="hidden"  id="staff_id" class='form-control'>
+            </div>
+         </div>
+         
+         <div class = "modal-footer">
+            <button type = "button" class = "btn btn-danger" data-dismiss = "modal">
+               Close
+            </button>
+            
+            <button type = "button" id='send' class = "btn btn-success send_notification">
+               Send Notification
+            </button>
+         </div>
+         
+      </div><!-- /.modal-content -->
+   </div><!-- /.modal-dialog -->
+  
+</div><!-- /.modal --> {% endcomment %}
+
+{% endblock content %}
+{% block custom_js %}
+  <script>
+    $("#success_message").hide();
+    $("#error_message").hide();
+
+$(document).ready(function () {
+    
+    $("#user_type").change(function () {
+        if ($("#user_type").val() == 1) {
+            $("#year_options").hide()
+            $("#class_type_options").hide()
+            $("#class_options").hide()
+        } else {
+            $("#year_options").show()
+            $("#class_type_options").show()
+            $("#class_options").show()
+        }
+    });
+    
+    fetchStudents();
+    
+    $("#year").change(function () {
+        fetchStudents();
+    });
+        
+    $("#class_type").change(function () {
+        fetchStudents();
+    });
+
+    function fetchStudents(){
+        var year = $("#year").val()
+        var class_type = $("#class_type").val()
+        $("#class_obj").html(null)
+        if (year.length  == 0 || class_type.length == 0 || year < 1 || class_type < 1){
+            return false;
+        }
+        $.ajax({
+            url: "{% url 'get_classes' %}",
+            type: 'POST',
+            data: {
+                year: year,
+                class_type: class_type
+            }
+        }).done(function (response) {
+            var json_data = JSON.parse(response)
+            if (json_data.length < 1) {
+                alert("No data to display")
+            } else {
+                var div_data = "<option value='*'>All</option>"
+
+                for (key in json_data) {
+                    div_data += "<option value='" + json_data[key]['id'] + "'>" + json_data[key]['name'] + " </option>"
+                }
+            
+                $("#class_obj").html(div_data)
+            }
+        }).fail(function (response) {
+            alert("Error in fetching students")
+        })
+            }
+            
+            
+            $(".show_notification").click(function(){
+          $("#staff_id").val($(this).val())
+      })
+      $("#send").click(function(){
+          var user_type = $("#user_type").val()
+          var year = $("#year").val()
+          var class_type = $("#class_type").val()
+          var class_obj = $("#class_obj").val()
+          var message = $("#message").val()
+          console.log(class_obj);
+          sendNotification(user_type, year, class_type, class_obj, message);
+      })
+
+
+    function sendNotification(user_type, year, class_type, class_obj, message){
+        $.ajax({
+            url: "{% url 'send_notification' %}",
+            type: 'POST',
+            data: {
+                user_type: user_type,
+                year: year,
+                class_type: class_type,
+                class_obj: class_obj,
+                message: message
+            }
+        }).done(function (response) {
+            
+            if (response == 'True'){
+                $("#success_message").html("Notification Sent Successfully!");
+                $("#success_message").modal('show');
+                alert("Notification Sent");
+                location.reload();
+            }else{
+                $("#error_message").html("Notification could not be sent");
+                $("#error_message").modal('show');
+                alert("Notification could not be saved. Please try again.");
+            }
+            
+        }).fail(function (response) {
+            alert("Error in saving token")
+        })
+        
+    }
+}); 
+    
+  </script>
+  {% endblock custom_js %}
